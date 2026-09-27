@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ACI AI Network Ops Center</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body class="bg-slate-900 text-slate-100 font-sans flex h-screen overflow-hidden">
+
+    <!-- LOGIN MODAL -->
+    <div id="loginModal" class="fixed inset-0 bg-slate-950/85 backdrop-blur-md z-50 flex items-center justify-center">
+        <div class="bg-slate-800 border border-slate-700 rounded-xl p-8 w-full max-w-md shadow-2xl">
+            <div class="flex items-center justify-center mb-6">
+                <i class="fa-solid fa-network-wired text-blue-500 text-3xl mr-3"></i>
+                <h1 class="text-2xl font-bold text-white">ACI Network AI Ops</h1>
+            </div>
+            <p class="text-xs text-slate-400 text-center mb-6">통신팀 Cisco ACI 운영 자동화 웹 시스템</p>
+            <form id="loginForm" onsubmit="App.handleLogin(event)" class="space-y-4">
+                <div>
+                    <label class="block text-xs text-slate-400 mb-1">사용자 계정</label>
+                    <input type="text" id="loginId" value="sdnuser" required class="w-full bg-slate-900 border border-slate-700 rounded-lg px-4 py-2 text-white text-sm focus:outline-none focus:border-blue-500">
+                </div>
+                <div>
+                    <label class="block text-xs text-slate-400 mb-1">비밀번호</label>
+                    <input type="password" id="loginPw" value="testpw11" required class="w-full bg-slate-900 border border-slate-700 rounded-lg px-4 py-2 text-white text-sm focus:outline-none focus:border-blue-500">
+                </div>
+                <div id="loginError" class="text-red-400 text-xs hidden text-center">계정 정보가 올바르지 않습니다.</div>
+                <button type="submit" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-medium py-2.5 rounded-lg text-sm transition">
+                    로그인 (Admin)
+                </button>
+            </form>
+            <div class="mt-4 text-[11px] text-slate-500 text-center">
+                * 계정: <code class="text-slate-300">sdnuser</code> / <code class="text-slate-300">testpw11</code>
+            </div>
+        </div>
+    </div>
+
+    <!-- MAIN APP -->
+    <div id="app" class="flex w-full h-full opacity-20 pointer-events-none transition-opacity duration-300">
+        <!-- SIDEBAR -->
+        <aside class="w-64 bg-slate-950 border-r border-slate-800 flex flex-col justify-between shrink-0">
+            <div>
+                <div class="p-5 border-b border-slate-800 flex items-center gap-3">
+                    <i class="fa-solid fa-microchip text-blue-500 text-xl"></i>
+                    <div>
+                        <h2 class="font-bold text-white leading-tight">ACI AI Ops</h2>
+                        <span class="text-[10px] bg-blue-500/20 text-blue-400 px-1.5 py-0.5 rounded">GitHub Pages Version</span>
+                    </div>
+                </div>
+                <nav class="mt-4 px-2 space-y-1">
+                    <button onclick="App.switchTab('dashboard')" id="nav-dashboard" class="sidebar-item-active w-full flex items-center px-4 py-3 text-sm font-medium rounded-lg hover:bg-slate-800 text-slate-300">
+                        <i class="fa-solid fa-chart-line w-6 text-slate-400"></i> 대시보드
+                    </button>
+                    <button onclick="App.switchTab('check')" id="nav-check" class="w-full flex items-center px-4 py-3 text-sm font-medium rounded-lg hover:bg-slate-800 text-slate-300">
+                        <i class="fa-solid fa-clipboard-check w-6 text-slate-400"></i> 월간 정기 점검
+                    </button>
+                    <button onclick="App.switchTab('ai-cmd')" id="nav-ai-cmd" class="w-full flex items-center px-4 py-3 text-sm font-medium rounded-lg hover:bg-slate-800 text-slate-300">
+                        <i class="fa-solid fa-terminal w-6 text-slate-400"></i> 자연어 AI & Interactive CLI
+                    </button>
+                    <button onclick="App.switchTab('ip-path')" id="nav-ip-path" class="w-full flex items-center px-4 py-3 text-sm font-medium rounded-lg hover:bg-slate-800 text-slate-300">
+                        <i class="fa-solid fa-route w-6 text-slate-400"></i> IP 경로/상태 조회
+                    </button>
+                    <button onclick="App.switchTab('data-mgmt')" id="nav-data-mgmt" class="w-full flex items-center px-4 py-3 text-sm font-medium rounded-lg hover:bg-slate-800 text-slate-300">
+                        <i class="fa-solid fa-file-excel w-6 text-slate-400"></i> 기초 데이터 관리
+                    </button>
+                    <button onclick="App.switchTab('audit-log')" id="nav-audit-log" class="w-full flex items-center px-4 py-3 text-sm font-medium rounded-lg hover:bg-slate-800 text-slate-300">
+                        <i class="fa-solid fa-clock-rotate-left w-6 text-slate-400"></i> 감사 로그 조회
+                    </button>
+                </nav>
+            </div>
+            <div class="p-4 border-t border-slate-800 flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                    <div class="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center font-bold text-xs">SDN</div>
+                    <div>
+                        <p class="text-xs font-semibold text-white">sdnuser</p>
+                        <p class="text-[10px] text-emerald-400">● Single Admin</p>
+                    </div>
+                </div>
+                <button onclick="App.logout()" title="로그아웃" class="text-slate-400 hover:text-white p-1">
+                    <i class="fa-solid fa-right-from-bracket"></i>
+                </button>
+            </div>
+        </aside>
+
+        <!-- MAIN CONTAINER -->
+        <main class="flex-1 flex flex-col min-w-0 bg-slate-900 overflow-y-auto">
+            <!-- DASHBOARD -->
+            <section id="tab-dashboard" class="p-6 space-y-6">
+                <h1 class="text-xl font-bold">ACI 스위치 패브릭 요약</h1>
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                    <div class="bg-slate-800 border border-slate-700 p-4 rounded-xl">
+                        <p class="text-xs text-slate-400">APIC 컨트롤러</p>
+                        <h3 class="text-2xl font-bold text-blue-400 mt-1">3 대 (Cluster)</h3>
+                    </div>
+                    <div class="bg-slate-800 border border-slate-700 p-4 rounded-xl">
+                        <p class="text-xs text-slate-400">Spine / Leaf 노드</p>
+                        <h3 class="text-2xl font-bold text-emerald-400 mt-1">12 대 (All Active)</h3>
+                    </div>
+                    <div class="bg-slate-800 border border-slate-700 p-4 rounded-xl">
+                        <p class="text-xs text-slate-400">최근 점검 이력</p>
+                        <h3 class="text-2xl font-bold text-white mt-1">2026-09 정기 점검 Pass</h3>
+                    </div>
+                    <div class="bg-slate-800 border border-slate-700 p-4 rounded-xl">
+                        <p class="text-xs text-slate-400">운영 모드</p>
+                        <h3 class="text-2xl font-bold text-amber-400 mt-1">Mock CLI / Client AI</h3>
+                    </div>
+                </div>
+            </section>
+
+            <!-- CHECK TAB -->
+            <section id="tab-check" class="p-6 space-y-6 hidden">
+                <div class="flex justify-between items-center border-b border-slate-800 pb-4">
+                    <div>
+                        <h1 class="text-xl font-bold">월간 정기 점검 실행</h1>
+                        <p class="text-xs text-slate-400 mt-1">지정된 ACI 노드 전체에 명령어를 일괄 실행하고 결과를 수집합니다.</p>
+                    </div>
+                    <button onclick="App.runMonthlyCheck()" id="btnCheckStart" class="bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded-lg text-sm font-medium">
+                        <i class="fa-solid fa-play mr-1"></i> 점검 자동 실행
+                    </button>
+                </div>
+                <div class="bg-slate-950 border border-slate-800 rounded-xl p-4 font-mono text-xs">
+                    <div id="checkTerminal" class="h-80 overflow-y-auto terminal-scroll space-y-1 text-slate-300">
+                        <p class="text-slate-500">[Ready] 정기 점검 실행 대기 중...</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- AI & INTERACTIVE CLI TAB -->
+            <section id="tab-ai-cmd" class="p-6 space-y-6 hidden">
+                <div class="border-b border-slate-800 pb-4">
+                    <h1 class="text-xl font-bold">자연어 AI 및 가상 CLI 콘솔</h1>
+                    <p class="text-xs text-slate-400 mt-1">자연어를 입력하거나 직접 Cisco CLI 명령어(예: <code class="text-emerald-400">show interface status</code>)를 입력해보세요.</p>
+                </div>
+
+                <div class="bg-slate-800 border border-slate-700 rounded-xl p-4 space-y-3">
+                    <div class="flex gap-2">
+                        <input type="text" id="aiInput" placeholder="예: 'leaf-101 인터페이스 상태 보여줘' 또는 직접 'show vlan' 입력" class="flex-1 bg-slate-900 border border-slate-700 rounded-lg px-4 py-2.5 text-sm text-white focus:outline-none focus:border-blue-500">
+                        <button onclick="App.executeAIPrompt()" class="bg-blue-600 hover:bg-blue-500 text-white px-5 py-2.5 rounded-lg text-sm font-medium">
+                            <i class="fa-solid fa-paper-plane mr-1"></i> 실행
+                        </button>
+                    </div>
+                    <div class="flex gap-2 text-xs text-slate-400">
+                        <span>빠른 테스트:</span>
+                        <button onclick="App.quickPrompt('leaf-101의 interface status 보여줘')" class="text-blue-400 hover:underline">leaf-101 상태</button> |
+                        <button onclick="App.quickPrompt('apic-01 health check')" class="text-blue-400 hover:underline">APIC 헬스</button> |
+                        <button onclick="App.quickPrompt('leaf-102 reload')" class="text-rose-400 hover:underline">reload (위험 명령)</button>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <div class="bg-slate-800 border border-slate-700 rounded-xl p-4 space-y-3">
+                        <h3 class="text-xs font-bold text-slate-300 border-b border-slate-700 pb-2">AI 해석 및 자연어 요약</h3>
+                        <div id="aiConverted" class="bg-slate-900 p-3 rounded-lg border border-slate-700 font-mono text-xs text-emerald-400">
+                            - 대기 중 -
+                        </div>
+                        <div id="aiSummary" class="bg-slate-900 p-3 rounded-lg border border-slate-700 text-xs text-slate-300 min-h-[120px]">
+                            자연어 요약 결과가 표시됩니다.
+                        </div>
+                    </div>
+
+                    <!-- Interactive CLI Terminal Simulator -->
+                    <div class="bg-slate-950 border border-slate-800 rounded-xl p-4 font-mono text-xs flex flex-col h-[320px]">
+                        <div class="text-slate-500 border-b border-slate-800 pb-2 mb-2 flex justify-between">
+                            <span><i class="fa-solid fa-terminal mr-2"></i>Virtual Switch Console (SSH)</span>
+                            <span id="targetNodeBadge" class="text-blue-400">LEAF-101</span>
+                        </div>
+                        <div id="cliOutput" class="flex-1 overflow-y-auto terminal-scroll space-y-1 text-slate-200">
+                            <p class="text-slate-600">Cisco Nexus Operating System (NX-OS) Software</p>
+                            <p class="text-slate-600">TAC support: http://www.cisco.com/tac</p>
+                            <p class="text-slate-500">--------------------------------------------------</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- IP PATH TAB -->
+            <section id="tab-ip-path" class="p-6 space-y-6 hidden">
+                <h1 class="text-xl font-bold">IP 경로 / Ping 추적 시뮬레이터</h1>
+                <div class="bg-slate-800 border border-slate-700 p-4 rounded-xl space-y-4">
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="text-xs text-slate-400">Source IP</label>
+                            <input type="text" id="srcIp" value="10.20.1.50" class="w-full bg-slate-900 border border-slate-700 p-2 text-sm rounded mt-1">
+                        </div>
+                        <div>
+                            <label class="text-xs text-slate-400">Destination IP</label>
+                            <input type="text" id="dstIp" value="10.20.2.80" class="w-full bg-slate-900 border border-slate-700 p-2 text-sm rounded mt-1">
+                        </div>
+                    </div>
+                    <button onclick="App.tracePath()" class="w-full bg-blue-600 hover:bg-blue-500 py-2 text-sm rounded font-medium">경로 조율 및 Ping 테스트</button>
+                </div>
+                <div id="ipResult" class="bg-slate-950 border border-slate-800 rounded-xl p-4 font-mono text-xs hidden text-emerald-400 space-y-2"></div>
+            </section>
+
+            <!-- DATA MGMT TAB -->
+            <section id="tab-data-mgmt" class="p-6 space-y-6 hidden">
+                <h1 class="text-xl font-bold">기초 데이터 업로드 (Excel)</h1>
+                <p class="text-xs text-slate-400">Excel 파일을 업로드하면 스위치 노드 목록을 동적으로 업데이트합니다.</p>
+                <div class="border-2 border-dashed border-slate-700 rounded-xl p-8 text-center bg-slate-800/50">
+                    <i class="fa-solid fa-file-excel text-emerald-500 text-4xl mb-3"></i>
+                    <p class="text-sm text-slate-300">devices.xlsx 또는 check_commands.xlsx 드래그앤드롭</p>
+                    <input type="file" onchange="ExcelHandler.handleUpload(event)" class="mt-4 text-xs text-slate-400">
+                </div>
+            </section>
+
+            <!-- AUDIT LOG TAB -->
+            <section id="tab-audit-log" class="p-6 space-y-6 hidden">
+                <h1 class="text-xl font-bold">실행 감사 로그</h1>
+                <div class="bg-slate-800 border border-slate-700 rounded-xl overflow-hidden">
+                    <table class="w-full text-left border-collapse text-xs">
+                        <thead class="bg-slate-900 text-slate-400">
+                            <tr>
+                                <th class="p-3">시간</th>
+                                <th class="p-3">유형</th>
+                                <th class="p-3">대상</th>
+                                <th class="p-3">실행 명령</th>
+                                <th class="p-3">상태</th>
+                            </tr>
+                        </thead>
+                        <tbody id="auditTableBody" class="divide-y divide-slate-700/50"></tbody>
+                    </table>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- SCRIPTS -->
+    <script src="js/mock_device.js"></script>
+    <script src="js/ai_engine.js"></script>
+    <script src="js/excel_handler.js"></script>
+    <script src="js/app.js"></script>
+</body>
+</html>
