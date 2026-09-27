@@ -3,28 +3,30 @@ const AIEngine = {
         const text = input.toLowerCase();
         let target = "LEAF-101";
         let command = "show interface status";
-        let isDangerous = false;
 
-        // 1. 위험 명령 감지 (명세서 규격 반영)
-        if (text.includes("reload") || text.includes("reboot") || text.includes("delete") || text.includes("shutdown")) {
-            isDangerous = true;
-        }
-
-        // 2. 대상 장비 및 명령어 패턴 파싱
         if (text.includes("apic")) {
             target = "APIC-01";
-            command = "show health";
-        } else if (text.includes("vlan")) {
-            command = "show vlan";
-        } else if (text.includes("system") || text.includes("cpu")) {
-            command = "show system status";
+            command = text.includes("fault") ? "show faults" : "show health";
+        } else {
+            if (text.includes("102")) target = "LEAF-102";
+            
+            if (text.includes("route") || text.includes("라우팅")) {
+                command = "show ip route";
+            } else if (text.includes("bgp")) {
+                command = "show bgp summary";
+            } else if (text.includes("lldp") || text.includes("이웃")) {
+                command = "show lldp neighbors";
+            } else if (text.includes("system") || text.includes("cpu")) {
+                command = "show system status";
+            } else if (text.includes("interface") || text.includes("상태")) {
+                command = "show interface status";
+            }
         }
 
         return {
             targetDevice: target,
             convertedCommand: command,
-            isDangerous: isDangerous,
-            summary: `[AI Analysis] 요청사항이 장비 [${target}]의 '${command}' 명령으로 해석되었습니다.`
+            summary: `[AI Analysis] 요청을 장비 [${target}]의 '${command}' 실행 결과로 분석/요약했습니다.`
         };
     }
 };
